@@ -18,36 +18,85 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
+  console.group('Analyst Login Request');
   try {
-    const { email, password } = await request.json();
-    const result = await handleLogin(email, password, 'analyst');
+    const body = await request.json();
+    console.log('📥 Request body:', body);
+
+    // Validate request body
+    if (!body.email || !body.password) {
+      console.error('❌ Missing email or password');
+      console.groupEnd();
+      return NextResponse.json(
+        { error: 'Email and password are required' },
+        { status: 400 }
+      );
+    }
+
+    // Attempt login
+    const result = await handleLogin(body.email, body.password, 'analyst');
+    console.log('📦 Login result:', result);
 
     if (!result.success) {
+      console.error('❌ Login failed:', result.error);
+      console.groupEnd();
       return NextResponse.json(
         { error: result.error },
         { status: 401 }
       );
     }
 
-    // Create response
-    const response = NextResponse.json({
+    // Create the response first
+    const response = NextResponse.json({ 
       success: true,
-      user: result.user,
+      user: {
+        id: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+        type: result.user.type
+      },
       redirectUrl: result.redirectUrl
     });
 
     // Set cookies
-    if (result.cookies) {
-      for (const cookie of result.cookies) {
-        response.cookies.set(cookie.name, cookie.value, cookie.options);
-      }
-    }
+    const cookieOptions = {
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    };
 
+    // Set auth token (HTTP only)
+    response.cookies.set('auth-token', result.user.token, {
+      ...cookieOptions,
+      httpOnly: true
+    });
+
+    // Set user data (client accessible)
+    response.cookies.set('user-data', JSON.stringify({
+      id: result.user.id,
+      name: result.user.name,
+      email: result.user.email,
+      type: result.user.type
+    }), {
+      ...cookieOptions,
+      httpOnly: false
+    });
+
+    console.log('🍪 Cookies set:', {
+      'auth-token': 'present',
+      'user-data': 'present'
+    });
+
+    console.log('🚀 Sending response');
+    console.groupEnd();
     return response;
+
   } catch (error) {
-    console.error('Analyst login error:', error);
+    console.error('❌ Login error:', error);
+    console.groupEnd();
     return NextResponse.json(
-      { error: 'An error occurred during login' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

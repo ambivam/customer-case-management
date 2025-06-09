@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,8 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import AnalystCaseManagement from '@/components/analyst-case-management';
 import { FileText, BarChart3, Users, Clock, LogOut, Shield } from 'lucide-react';
 import { toast } from 'sonner';
-
-'use client';
 
 export default function AnalystDashboardPage() {
   const [analyst, setAnalyst] = useState<any>(null);
