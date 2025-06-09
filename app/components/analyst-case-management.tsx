@@ -63,6 +63,7 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
   const [updateMessage, setUpdateMessage] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+  const [isManageDialogOpen, setIsManageDialogOpen] = useState(false);
 
   const fetchCases = async () => {
     try {
@@ -331,21 +332,25 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
                   </Button>
 
                   {/* Case Management Dialog */}
-                  <Dialog>
+                  <Dialog open={isManageDialogOpen} onOpenChange={setIsManageDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
-                        <Edit className="h-4 w-4 mr-1" />
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Edit className="w-4 h-4 mr-2" />
                         Manage Case
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Manage Case: {case_.title}</DialogTitle>
+                        <DialogTitle>Manage Case</DialogTitle>
                         <DialogDescription>
-                          Update case status, priority, due date, and add notes
+                          Update case status, priority, and due date
                         </DialogDescription>
                       </DialogHeader>
-                      <CaseManagementForm case_={case_} onUpdate={updateCase} />
+                      <CaseManagementForm 
+                        case_={case_} 
+                        onUpdate={updateCase}
+                        onSuccess={() => setIsManageDialogOpen(false)} 
+                      />
                     </DialogContent>
                   </Dialog>
 
@@ -396,7 +401,11 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
 }
 
 // Case Management Form Component
-function CaseManagementForm({ case_, onUpdate }: { case_: Case; onUpdate: (id: string, updates: any) => Promise<boolean> }) {
+function CaseManagementForm({ case_, onUpdate, onSuccess }: { 
+  case_: Case; 
+  onUpdate: (id: string, updates: any) => Promise<boolean>;
+  onSuccess?: () => void;
+}) {
   const [status, setStatus] = useState(case_.status);
   const [priority, setPriority] = useState(case_.priority || '');
   const [dueDate, setDueDate] = useState(case_.dueDate ? format(new Date(case_.dueDate), 'yyyy-MM-dd') : '');
@@ -415,6 +424,9 @@ function CaseManagementForm({ case_, onUpdate }: { case_: Case; onUpdate: (id: s
     if (dueDate) updates.dueDate = dueDate;
 
     const success = await onUpdate(case_.id, updates);
+    if (success && onSuccess) {
+      onSuccess();
+    }
     setIsUpdating(false);
   };
 
