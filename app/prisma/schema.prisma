@@ -1,0 +1,116 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  cases     Case[]
+  
+  @@map("users")
+}
+
+model Analyst {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  assignedCases Case[]
+  caseUpdates   CaseUpdate[]
+  
+  @@map("analysts")
+}
+
+model Case {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  email       String
+  category    CaseCategory
+  status      CaseStatus  @default(OPEN)
+  priority    Priority?
+  dueDate     DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Dynamic fields based on category
+  nameChange      String?
+  addressChange   String?
+  addNewBranch    String?
+  addNewAccount   String?
+  addNewEmployee  String?
+  addNewCompany   String?
+  
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  analystId   String?
+  analyst     Analyst?    @relation(fields: [analystId], references: [id])
+  
+  documents   Document[]
+  updates     CaseUpdate[]
+  
+  @@map("cases")
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  filename  String
+  filepath  String
+  mimetype  String
+  size      Int
+  createdAt DateTime @default(now())
+  
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  
+  @@map("documents")
+}
+
+model CaseUpdate {
+  id        String   @id @default(cuid())
+  message   String
+  createdAt DateTime @default(now())
+  
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  
+  analystId String
+  analyst   Analyst  @relation(fields: [analystId], references: [id])
+  
+  @@map("case_updates")
+}
+
+enum CaseCategory {
+  CUSTOMER
+  MERCHANT
+  COMMERCIAL
+}
+
+enum CaseStatus {
+  OPEN
+  IN_PROGRESS
+  PENDING
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}

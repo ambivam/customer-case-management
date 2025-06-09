@@ -1,0 +1,18 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/analyst/register/page": "app/analyst/register/page.js",
+  "/analyst/login/page": "app/analyst/login/page.js",
+  "/analyst/dashboard/page": "app/analyst/dashboard/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/api/analyst/login/route": "app/api/analyst/login/route.js",
+  "/login/page": "app/login/page.js",
+  "/api/auth/register/route": "app/api/auth/register/route.js",
+  "/api/analyst/register/route": "app/api/analyst/register/route.js",
+  "/api/auth/login/route": "app/api/auth/login/route.js",
+  "/api/auth/logout/route": "app/api/auth/logout/route.js",
+  "/api/cases/[id]/route": "app/api/cases/[id]/route.js",
+  "/api/cases/[id]/updates/route": "app/api/cases/[id]/updates/route.js",
+  "/api/cases/route": "app/api/cases/route.js",
+  "/page": "app/page.js",
+  "/register/page": "app/register/page.js"
+}
