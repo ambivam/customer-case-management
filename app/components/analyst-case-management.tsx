@@ -62,6 +62,7 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [updateMessage, setUpdateMessage] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
 
   const fetchCases = async () => {
     try {
@@ -122,7 +123,8 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
       if (response.ok) {
         toast.success('Update added successfully');
         setUpdateMessage('');
-        fetchCases();
+        setIsUpdateDialogOpen(false); // Close the dialog
+        await fetchCases(); // Refresh cases
         return true;
       } else {
         toast.error('Failed to add update');
@@ -348,10 +350,10 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
                   </Dialog>
 
                   {/* Add Update Dialog */}
-                  <Dialog>
+                  <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button size="sm">
-                        <Plus className="h-4 w-4 mr-1" />
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Plus className="w-4 h-4 mr-2" />
                         Add Update
                       </Button>
                     </DialogTrigger>
