@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Clock, User, Mail, Calendar, MessageSquare, Edit, Plus } from 'lucide-react';
+import { Clock, User, Mail, Calendar, MessageSquare, Edit, Plus, FileText, Download, File } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -40,6 +40,10 @@ interface Case {
     analyst: {
       name: string;
     };
+  }>;
+  documents?: Array<{
+    id: string;
+    filename: string;
   }>;
   // Dynamic fields
   nameChange?: string;
@@ -244,10 +248,33 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
                     <CardTitle className="text-lg">{case_.title}</CardTitle>
-                    <div className="flex items-center space-x-4 text-sm text-gray-600">
-                      <div className="flex items-center space-x-1">
-                        <User className="h-4 w-4" />
-                        <span>{case_.user.name}</span>
+                    {/* Documents Section */}
+                    {case_.documents && case_.documents.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        <h4 className="text-sm font-medium">Attached Documents</h4>
+                        <div className="grid grid-cols-1 gap-2">
+                          {case_.documents.map((doc) => (
+                            <div key={doc.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                              <div className="flex items-center space-x-2">
+                                <File className="h-4 w-4 text-blue-500" />
+                                <span className="truncate">{doc.filename}</span>
+                              </div>
+                              <a href={`/api/cases/${case_.id}/documents/${doc.id}`} 
+                                 target="_blank" 
+                                 rel="noopener noreferrer"
+                                 className="p-1 hover:bg-gray-200 rounded">
+                                <Download className="h-4 w-4 text-gray-500" />
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Case Details */}
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <User className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm">{case_.user.name}</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <Mail className="h-4 w-4" />
@@ -281,9 +308,35 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
                 </div>
               </CardHeader>
               <CardContent>
-                <CardDescription className="mb-4">
+                <div className="text-sm text-gray-500">
                   {case_.description}
-                </CardDescription>
+                </div>
+
+                {/* Documents Section */}
+                {case_.documents && case_.documents.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <h4 className="text-sm font-medium">Attached Documents</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      {case_.documents.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                          <div className="flex items-center space-x-2">
+                            <File className="h-4 w-4 text-blue-500" />
+                            <span className="truncate">{doc.filename}</span>
+                          </div>
+                          <a
+                            href={`/api/cases/${case_.id}/documents/${doc.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 hover:bg-gray-200 rounded">
+                            <Download className="h-4 w-4 text-gray-500" />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Dynamic Fields */}
                 {renderDynamicFields(case_).length > 0 && (

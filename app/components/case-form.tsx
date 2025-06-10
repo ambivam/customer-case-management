@@ -1,21 +1,32 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import { X, Upload, FileText } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CaseFormProps {
   onSuccess?: () => void;
 }
 
 export default function CaseForm({ onSuccess }: CaseFormProps) {
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setFiles(prev => [...prev, ...newFiles]);
+    }
+  }, []);
+
+  const removeFile = useCallback((index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  }, []);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [email, setEmail] = useState('');
@@ -26,6 +37,8 @@ export default function CaseForm({ onSuccess }: CaseFormProps) {
   const [addNewAccount, setAddNewAccount] = useState('');
   const [addNewEmployee, setAddNewEmployee] = useState('');
   const [addNewCompany, setAddNewCompany] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,6 +51,11 @@ export default function CaseForm({ onSuccess }: CaseFormProps) {
       formData.append('description', description);
       formData.append('email', email);
       formData.append('category', category);
+
+      // Append files if any
+      files.forEach((file, index) => {
+        formData.append(`file-${index}`, file);
+      });
       
       // Add dynamic fields based on category
       if (category === 'CUSTOMER') {
@@ -71,6 +89,7 @@ export default function CaseForm({ onSuccess }: CaseFormProps) {
         setAddNewAccount('');
         setAddNewEmployee('');
         setAddNewCompany('');
+        setFiles([]);
         onSuccess?.();
       } else {
         toast.error(data.error || 'Failed to create case');
@@ -219,6 +238,54 @@ export default function CaseForm({ onSuccess }: CaseFormProps) {
               className="min-h-[120px]"
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Supporting Documents</Label>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-center w-full">
+                <label
+                  htmlFor="file-upload"
+                  className={cn(
+                    'flex flex-col items-center justify-center w-full h-32',
+                    'border-2 border-dashed rounded-lg cursor-pointer',
+                    'bg-gray-50 hover:bg-gray-100'
+                  )}
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="h-8 w-8 text-gray-500 mb-2" />
+                    <p className="text-sm text-gray-500">Click to upload or drag and drop</p>
+                    <p className="text-xs text-gray-500">PDF, PNG, JPG up to 10MB each</p>
+                  </div>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    className="hidden"
+                    multiple
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={handleFileChange}
+                  />
+                </label>
+              </div>
+              {files.length > 0 && (
+                <div className="grid grid-cols-1 gap-2">
+                  {files.map((file, index) => (
+                    <div
+                      key={`${file.name}-${index}`}
+                      className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span className="text-sm truncate">{file.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        className="h-8 w-8 p-0">
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Dynamic fields based on category */}

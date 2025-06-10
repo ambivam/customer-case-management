@@ -76,6 +76,17 @@ export async function GET(request: NextRequest) {
   }
 }
 
+import { writeFile, readFile, unlink } from 'fs/promises';
+import { mkdir } from 'fs/promises';
+import path from 'path';
+
+// Function to ensure upload directory exists
+async function ensureUploadDir(caseId: string) {
+  const uploadDir = path.join(process.cwd(), 'uploads', caseId);
+  await mkdir(uploadDir, { recursive: true });
+  return uploadDir;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
@@ -104,8 +115,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Process files if any
+    const files: { filename: string; filepath: string; mimetype: string; size: number }[] = [];
+    let fileIndex = 0;
+    while (formData.has(`file-${fileIndex}`)) {
+      const file = formData.get(`file-${fileIndex}`) as File;
+      if (file) {
+        const bytes = await file.arrayBuffer();
+        const buffer = new Uint8Array(bytes);
+        
+        // Create case-specific upload directory
+        const uploadDir = await ensureUploadDir('temp'); // Temporary directory until we have the case ID
+        const filepath = path.join(uploadDir, file.name);
+        
+        // Save file
+        await writeFile(filepath, buffer);
+        
+        files.push({
+          filename: file.name,
+          filepath: filepath,
+          mimetype: file.type,
+          size: file.size,
+        });
+      }
+      fileIndex++;
+    }
+
     // Create case
-    const newCase = await prisma.case.create({
+    let caseData = await prisma.case.create({
       data: {
         title,
         description,
@@ -119,11 +156,49 @@ export async function POST(request: NextRequest) {
         addNewEmployee: addNewEmployee || null,
         addNewCompany: addNewCompany || null,
       },
+      include: {
+        documents: true,
+      },
     });
+
+    // Move files to permanent location and create document records
+    if (files.length > 0) {
+      const permanentUploadDir = await ensureUploadDir(caseData.id);
+      
+      for (const file of files) {
+        // Move file to permanent location
+        const permanentPath = path.join(permanentUploadDir, file.filename);
+        await writeFile(permanentPath, await readFile(file.filepath));
+        
+        // Create document record
+        await prisma.document.create({
+          data: {
+            filename: file.filename,
+            filepath: permanentPath,
+            mimetype: file.mimetype,
+            size: file.size,
+            caseId: caseData.id,
+          },
+        });
+        
+        // Clean up temporary file
+        await unlink(file.filepath);
+      }
+      
+      // Fetch updated case with documents
+      const updatedCase = await prisma.case.findUnique({
+        where: { id: caseData.id },
+        include: { documents: true },
+      });
+      
+      if (updatedCase) {
+        caseData = updatedCase;
+      }
+    }
 
     return NextResponse.json({
       message: 'Case created successfully',
-      case: newCase,
+      case: caseData,
     });
   } catch (error) {
     console.error('Error creating case:', error);
