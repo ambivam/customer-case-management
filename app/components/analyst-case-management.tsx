@@ -62,8 +62,7 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [updateMessage, setUpdateMessage] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
-  const [isManageDialogOpen, setIsManageDialogOpen] = useState(false);
+  const [activeDialogs, setActiveDialogs] = useState<{[key: string]: boolean}>({});
 
   const fetchCases = async () => {
     try {
@@ -124,7 +123,7 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
       if (response.ok) {
         toast.success('Update added successfully');
         setUpdateMessage('');
-        setIsUpdateDialogOpen(false); // Close the dialog
+        setActiveDialogs(prev => ({ ...prev, [`update-${caseId}`]: false })); // Close the dialog
         await fetchCases(); // Refresh cases
         return true;
       } else {
@@ -332,7 +331,10 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
                   </Button>
 
                   {/* Case Management Dialog */}
-                  <Dialog open={isManageDialogOpen} onOpenChange={setIsManageDialogOpen}>
+                  <Dialog 
+                    open={activeDialogs[`manage-${case_.id}`]} 
+                    onOpenChange={(open) => setActiveDialogs(prev => ({ ...prev, [`manage-${case_.id}`]: open }))}
+                  >
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm" className="w-full">
                         <Edit className="w-4 h-4 mr-2" />
@@ -341,7 +343,7 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Manage Case</DialogTitle>
+                        <DialogTitle>Manage Case: {case_.title}</DialogTitle>
                         <DialogDescription>
                           Update case status, priority, and due date
                         </DialogDescription>
@@ -349,13 +351,16 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
                       <CaseManagementForm 
                         case_={case_} 
                         onUpdate={updateCase}
-                        onSuccess={() => setIsManageDialogOpen(false)} 
+                        onSuccess={() => setActiveDialogs(prev => ({ ...prev, [`manage-${case_.id}`]: false }))} 
                       />
                     </DialogContent>
                   </Dialog>
 
                   {/* Add Update Dialog */}
-                  <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
+                  <Dialog 
+                    open={activeDialogs[`update-${case_.id}`]}
+                    onOpenChange={(open) => setActiveDialogs(prev => ({ ...prev, [`update-${case_.id}`]: open }))}
+                  >
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm" className="w-full">
                         <Plus className="w-4 h-4 mr-2" />
@@ -364,7 +369,7 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Add Case Update</DialogTitle>
+                        <DialogTitle>Add Update: {case_.title}</DialogTitle>
                         <DialogDescription>
                           Add a note or update for the customer
                         </DialogDescription>
