@@ -175,9 +175,14 @@ export default function AnalystCaseManagement({ analystId }: AnalystCaseManageme
   };
 
   const handleEmailClick = (email: string, caseTitle: string) => {
-    const subject = encodeURIComponent(`Regarding Case: ${caseTitle}`);
-    const body = encodeURIComponent(`Dear Customer,\n\nI am writing regarding your case "${caseTitle}".\n\nBest regards,\nSupport Team`);
-    window.open(`mailto:${email}?subject=${subject}&body=${body}`);
+    const subject = `Case Update: ${caseTitle}`;
+    const body = `Dear Customer,
+
+I am writing to inform you that case "${caseTitle}" has been closed successfully. Please review your case in our Customer Portal for further details.
+
+Best Regards,
+Customer Support Team`;
+    window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   const renderDynamicFields = (case_: Case) => {
