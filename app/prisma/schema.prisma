@@ -39,9 +39,12 @@ model Case {
   title       String
   description String
   email       String
-  category    CaseCategory
-  status      CaseStatus  @default(OPEN)
-  priority    Priority?
+  // Valid values: CUSTOMER, MERCHANT, COMMERCIAL
+  category    String
+  // Valid values: OPEN, IN_PROGRESS, PENDING, RESOLVED, CLOSED
+  status      String      @default("OPEN")
+  // Valid values: LOW, MEDIUM, HIGH, CRITICAL
+  priority    String?
   dueDate     DateTime?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -94,23 +97,6 @@ model CaseUpdate {
   @@map("case_updates")
 }
 
-enum CaseCategory {
-  CUSTOMER
-  MERCHANT
-  COMMERCIAL
-}
-
-enum CaseStatus {
-  OPEN
-  IN_PROGRESS
-  PENDING
-  RESOLVED
-  CLOSED
-}
-
-enum Priority {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
+// These were previously enums, but SQLite doesn't support enums
+// They are now implemented as strings with specific valid values
+// See the comments in the Case model for valid values
